@@ -1,5 +1,6 @@
 class WWError extends Error{
     cause: any;
+    beforeStack: any[] = [];
 
     constructor(e: unknown) {
         super();
@@ -10,16 +11,21 @@ class WWError extends Error{
         }
     }
 
-    toString(): string {
-        return `Cause: ${this.cause}`;
-    }
-
     static handlingError(e: unknown) {
+        const _e = new WWError(e);
         if(e instanceof WWError) {
-            return e;
+            _e.beforeStack = e.beforeStack;
+        }
+        if(e instanceof Error) {
+            const _s = e.stack?.split('\n');
+            if(_s) {
+                _s.forEach(v => {
+                    _e.beforeStack.push(v);
+                });
+            }
         }
 
-        return new WWError(e);
+        return _e;
     }
 }
 

@@ -1,9 +1,13 @@
 import express, {Request, Response, ErrorRequestHandler, NextFunction} from "express";
 import dotenv from 'dotenv';
+import morgan from "morgan";
+import * as rfs from 'rotating-file-stream';
+import * as path from 'path';
 
 import bodyParser from "body-parser";
-import userRouter from "./src/routes/UserRouter";
-import {ErrorCode, ResponsePayload} from "./src/types/types";
+import { ResponsePayload } from "./src/types/payloads";
+import { ResultCode } from "./src/types/codes";
+import rootRouter from "./src/RootRouter";
 
 const app = express();
 const PORT = 3000;
@@ -12,7 +16,18 @@ dotenv.config();
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
-app.use('/user', userRouter);
+
+const today = new Date();
+const logFileStream = rfs.createStream(`log_${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}.log`, {
+    interval: '1d',
+    path: path.join(__dirname, 'log')
+});
+app.use(morgan('combined', { stream: logFileStream }));
+app.use(morgan('dev'));
+
+
+app.use('/api', rootRouter);
+app.use('/public', express.static('./public'));
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Hello, World!');
@@ -21,7 +36,7 @@ app.get('/', (req: Request, res: Response) => {
 app.use((err: ErrorRequestHandler, req: Request, res: Response, next: NextFunction) => {
     const payload: ResponsePayload = {
         success: false,
-        code: ErrorCode.UNKNOWN,
+        code: ResultCode.UNKNOWN,
         message: 'Internal Server Error'
     }
 
