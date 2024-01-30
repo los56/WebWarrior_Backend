@@ -1,5 +1,11 @@
-node_modules/
-static/
-.idea/
+# Libraries & Caches
+node_modules
+static
+.idea
 
+
+# Environment variables
 .env
+
+# Log
+log
